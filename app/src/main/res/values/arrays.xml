@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Anti-Aliasing Modes -->
+    <string-array name="aa_modes">
+        <item>TAA (Default)</item>
+        <item>FXAA</item>
+        <item>None</item>
+    </string-array>
+
+    <!-- Fog Modes -->
+    <string-array name="fog_modes">
+        <item>Linear</item>
+        <item>Exponential (Default)</item>
+        <item>Exponential Squared</item>
+    </string-array>
+</resources>

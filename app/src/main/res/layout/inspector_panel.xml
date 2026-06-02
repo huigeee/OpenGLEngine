@@ -1,0 +1,796 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 可拖动的 Inspector 面板容器 -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- 拖动把手 -->
+    <View
+        android:id="@+id/drag_handle"
+        android:layout_width="48dp"
+        android:layout_height="4dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="#44FFFFFF"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <!-- FPS 显示 - 固定在顶部，不随滚动 -->
+    <LinearLayout
+        android:id="@+id/fps_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#E8000000"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/stats_fps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FPS: --"
+            android:textColor="#00FF00"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- 可滚动内容区 -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="44dp"
+        android:fillViewport="true"
+        android:descendantFocusability="blocksDescendants">
+
+        <LinearLayout
+            android:id="@+id/inspector_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- 相机参数面板 -->
+            <TextView
+                android:id="@+id/section_camera"
+                style="@style/InspectorSectionHeader"
+                android:text="Camera" />
+
+            <LinearLayout style="@style/InspectorSectionContent">
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Position" />
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="X" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/camera_pos_x"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-10.0"
+                        android:valueTo="10.0"
+                        android:value="0.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/camera_pos_x_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="Y" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/camera_pos_y"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-10.0"
+                        android:valueTo="10.0"
+                        android:value="2.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/camera_pos_y_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="2.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="Z" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/camera_pos_z"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-10.0"
+                        android:valueTo="10.0"
+                        android:value="7.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/camera_pos_z_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="7.00" />
+                </LinearLayout>
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Target" />
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="X" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/camera_target_x"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-5.0"
+                        android:valueTo="5.0"
+                        android:value="0.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/camera_target_x_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="Y" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/camera_target_y"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-5.0"
+                        android:valueTo="5.0"
+                        android:value="0.5"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/camera_target_y_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.50" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="Z" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/camera_target_z"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-5.0"
+                        android:valueTo="5.0"
+                        android:value="0.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/camera_target_z_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.00" />
+                </LinearLayout>
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="FOV" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/camera_fov"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="30.0"
+                    android:valueTo="120.0"
+                    android:value="45.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/camera_fov_val"
+                    style="@style/InspectorValue"
+                    android:text="45.0" />
+
+                <View style="@style/InspectorDivider" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/camera_orthographic"
+                    style="@style/InspectorSwitch"
+                    android:text="Orthographic" />
+            </LinearLayout>
+
+            <!-- 场景配置面板 -->
+            <TextView
+                android:id="@+id/section_scene"
+                style="@style/InspectorSectionHeader"
+                android:text="Scene" />
+
+            <LinearLayout style="@style/InspectorSectionContent">
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Background Color" />
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="R" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/scene_bg_r"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="0.0"
+                        android:valueTo="1.0"
+                        android:value="0.1"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/scene_bg_r_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.10" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="G" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/scene_bg_g"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="0.0"
+                        android:valueTo="1.0"
+                        android:value="0.1"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/scene_bg_g_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.10" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="B" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/scene_bg_b"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="0.0"
+                        android:valueTo="1.0"
+                        android:value="0.15"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/scene_bg_b_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="0.15" />
+                </LinearLayout>
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Ambient Intensity" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/scene_ambient"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="2.0"
+                    android:value="1.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/scene_ambient_val"
+                    style="@style/InspectorValue"
+                    android:text="1.00" />
+
+                <View style="@style/InspectorDivider" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/scene_shadow"
+                    style="@style/InspectorSwitch"
+                    android:checked="true"
+                    android:text="Shadows" />
+
+                <!-- Shadow Light Position -->
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Light Position" />
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="X" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/scene_light_pos_x"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-20.0"
+                        android:valueTo="20.0"
+                        android:value="5.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/scene_light_pos_x_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="5.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="Y" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/scene_light_pos_y"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="1.0"
+                        android:valueTo="30.0"
+                        android:value="10.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/scene_light_pos_y_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="10.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="Z" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/scene_light_pos_z"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="-20.0"
+                        android:valueTo="20.0"
+                        android:value="5.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/scene_light_pos_z_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="5.00" />
+                </LinearLayout>
+
+                <!-- Shadow Quality -->
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Shadow Bias" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/scene_shadow_bias"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.001"
+                    android:valueTo="0.1"
+                    android:value="0.05"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/scene_shadow_bias_val"
+                    style="@style/InspectorValue"
+                    android:text="0.050" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/scene_shadow_soft"
+                    style="@style/InspectorSwitch"
+                    android:checked="true"
+                    android:text="Soft Shadows (PCF)" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/scene_ssao"
+                    style="@style/InspectorSwitch"
+                    android:text="SSAO" />
+            </LinearLayout>
+
+            <!-- 后处理面板 -->
+            <TextView
+                android:id="@+id/section_postprocess"
+                style="@style/InspectorSectionHeader"
+                android:text="Post Process" />
+
+            <LinearLayout style="@style/InspectorSectionContent">
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Anti-Aliasing" />
+
+                <Spinner
+                    android:id="@+id/pp_aa_mode"
+                    style="@style/InspectorSpinner"
+                    android:entries="@array/aa_modes" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/pp_bloom"
+                    style="@style/InspectorSwitch"
+                    android:checked="false"
+                    android:text="Bloom" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Bloom Intensity" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_bloom_intensity"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="2.0"
+                    android:value="1.5"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/pp_bloom_intensity_val"
+                    style="@style/InspectorValue"
+                    android:text="1.50" />
+
+                <View style="@style/InspectorDivider" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/pp_tonemap"
+                    style="@style/InspectorSwitch"
+                    android:checked="true"
+                    android:text="Tonemap" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Tonemap Operator" />
+
+                <Spinner
+                    android:id="@+id/pp_tonemap_op"
+                    style="@style/InspectorSpinner"
+                    android:entries="@array/tonemap_operators" />
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Exposure" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_exposure"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.1"
+                    android:valueTo="3.0"
+                    android:value="0.4"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/pp_exposure_val"
+                    style="@style/InspectorValue"
+                    android:text="0.40" />
+
+                <View style="@style/InspectorDivider" />
+
+                <!-- Fog -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/pp_fog"
+                    style="@style/InspectorSwitch"
+                    android:text="Fog" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Fog Mode" />
+
+                <Spinner
+                    android:id="@+id/pp_fog_mode"
+                    style="@style/InspectorSpinner"
+                    android:entries="@array/fog_modes" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Fog Density" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_fog_density"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="1.0"
+                    android:value="0.25"
+                    app:tooltipText="" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Fog Start" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_fog_start"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="20.0"
+                    android:value="1.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Fog End" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_fog_end"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="50.0"
+                    android:value="8.0"
+                    app:tooltipText="" />
+
+                <View style="@style/InspectorDivider" />
+
+                <!-- DoF -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/pp_dof"
+                    style="@style/InspectorSwitch"
+                    android:text="Depth of Field" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Focus Distance" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_dof_focus_dist"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.1"
+                    android:valueTo="10.0"
+                    android:value="0.5"
+                    app:tooltipText="" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Near Blur" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_dof_near"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.1"
+                    android:valueTo="20.0"
+                    android:value="2.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Far Blur" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_dof_far"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="1.0"
+                    android:valueTo="100.0"
+                    android:value="20.0"
+                    app:tooltipText="" />
+
+                <View style="@style/InspectorDivider" />
+
+                <!-- Volumetric Light (God Rays) -->
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/pp_volumetric"
+                    style="@style/InspectorSwitch"
+                    android:text="Volumetric Light" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Density" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_vol_density"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="0.5"
+                    android:value="0.03"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/pp_vol_density_val"
+                    style="@style/InspectorValue"
+                    android:text="0.030" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Scattering (HG g)" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_vol_scattering"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="-0.95"
+                    android:valueTo="0.95"
+                    android:value="0.75"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/pp_vol_scattering_val"
+                    style="@style/InspectorValue"
+                    android:text="0.75" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Steps" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_vol_steps"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="8.0"
+                    android:valueTo="128.0"
+                    android:stepSize="1.0"
+                    android:value="48.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/pp_vol_steps_val"
+                    style="@style/InspectorValue"
+                    android:text="48" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Intensity" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/pp_vol_intensity"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="5.0"
+                    android:value="1.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/pp_vol_intensity_val"
+                    style="@style/InspectorValue"
+                    android:text="1.00" />
+            </LinearLayout>
+
+            <!-- 材质面板 -->
+            <TextView
+                android:id="@+id/section_material"
+                style="@style/InspectorSectionHeader"
+                android:text="Material" />
+
+            <LinearLayout style="@style/InspectorSectionContent">
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Base Color" />
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="R" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/mat_base_r"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="0.0"
+                        android:valueTo="1.0"
+                        android:value="1.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/mat_base_r_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="1.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="G" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/mat_base_g"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="0.0"
+                        android:valueTo="1.0"
+                        android:value="1.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/mat_base_g_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="1.00" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/InspectorVectorRow">
+                    <TextView
+                        style="@style/InspectorVectorLabel"
+                        android:text="B" />
+
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/mat_base_b"
+                        style="@style/InspectorSlider"
+                        android:valueFrom="0.0"
+                        android:valueTo="1.0"
+                        android:value="1.0"
+                        app:tooltipText="" />
+
+                    <TextView
+                        android:id="@+id/mat_base_b_val"
+                        style="@style/InspectorVectorValue"
+                        android:text="1.00" />
+                </LinearLayout>
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Metallic" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/mat_metallic"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="1.0"
+                    android:value="0.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/mat_metallic_val"
+                    style="@style/InspectorValue"
+                    android:text="0.00" />
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="Roughness" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/mat_roughness"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="1.0"
+                    android:value="0.5"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/mat_roughness_val"
+                    style="@style/InspectorValue"
+                    android:text="0.50" />
+
+                <View style="@style/InspectorDivider" />
+
+                <TextView
+                    style="@style/InspectorLabel"
+                    android:text="AO" />
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/mat_ao"
+                    style="@style/InspectorSlider"
+                    android:valueFrom="0.0"
+                    android:valueTo="1.0"
+                    android:value="1.0"
+                    app:tooltipText="" />
+
+                <TextView
+                    android:id="@+id/mat_ao_val"
+                    style="@style/InspectorValue"
+                    android:text="1.00" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</merge>
