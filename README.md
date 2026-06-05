@@ -1,5 +1,8 @@
 # OGL Render Engine
 
+只做学习用。
+涉及的库：Assimp，glm，libpng，stb_image,都不用于商业，本仓库也禁止其他人直接引入商业用途，只做学习和讨论交流
+
 Android 上的独立进程 OpenGL 渲染引擎，支持**多个 App 共享一个渲染引擎实例**，前后台切换时引擎不重启。
 
 ---
