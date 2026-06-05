@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project("myapplication")
+project("ogl")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -53,55 +53,59 @@ add_library(
     native-renderer
     SHARED
     native-renderer.cpp
-    ogl/Scene.cpp
-    ogl/MainScene.cpp
-    ogl/utils/Camera.cpp
-    ogl/utils/Matrix.cpp
-    ogl/utils/Shader.cpp
-    ogl/utils/ShaderManager.cpp
-    ogl/utils/DebugQuad.cpp
-    ogl/utils/ResourceLoader.cpp
-    ogl/utils/EGLCore.cpp
-    ogl/skybox/SkyBoxEffect.cpp
-    ogl/effect/TAAEffect.cpp
-    ogl/effect/BloomEffect.cpp
-    ogl/effect/TonemapEffect.cpp
-    ogl/effect/DoFEffect.cpp
-    ogl/effect/FXAAEffect.cpp
-    ogl/effect/FogEffect.cpp
-    ogl/effect/VolumetricLightEffect.cpp
-    ogl/shadow/ShadowEffect.cpp
-    ogl/object/Object3D.cpp
-    ogl/object/Triangle.cpp
-    ogl/object/Cube.cpp
-    ogl/object/Sphere.cpp
-    ogl/object/Sphere2.cpp
-    ogl/object/Cube2.cpp
-    ogl/object/Plane.cpp
-    ogl/object/ClothMesh.cpp
-    ogl/object/GroundPlane.cpp
-    ogl/material/Material.cpp
-    ogl/material/UnlitMaterial.cpp
-    ogl/material/LitMaterial.cpp
-    ogl/material/PBRMaterial.cpp
-    ogl/material/SimpleTextureMaterial.cpp
-    ogl/material/DebugIBLMaterial.cpp
-    ogl/material/IBLPBRMaterial.cpp
-    ogl/material/ClothMaterial.cpp
-    ogl/material/SkinnedMaterial.cpp
-    ogl/physics/ClothSimulation.cpp
-    ogl/physics/CollisionPrimitives.cpp
-    ogl/model/ModelLoader.cpp
-    ogl/model/ModelObject.cpp
-    ogl/model/MeshNode.cpp
-    ogl/model/SceneNode.cpp
-    ogl/model/Animator.cpp
-    ogl/particle/ParticleSystem.cpp
-    ogl/particle/FireEffect.cpp
-    ogl/particle/RainEffect.cpp
-    ogl/particle/SnowEffect.cpp
-    ogl/particle/CloudEffect.cpp
-    ogl/tween/Tween.cpp
+    ogl/oglengine/Scene.cpp
+    ogl/project/MainScene.cpp
+    ogl/oglengine/utils/Camera.cpp
+    ogl/oglengine/utils/Matrix.cpp
+    ogl/oglengine/utils/Shader.cpp
+    ogl/oglengine/utils/ShaderManager.cpp
+    ogl/oglengine/utils/DebugQuad.cpp
+    ogl/oglengine/utils/ResourceLoader.cpp
+    ogl/oglengine/utils/EGLCore.cpp
+    ogl/oglengine/skybox/SkyBoxEffect.cpp
+    ogl/oglengine/effect/TAAEffect.cpp
+    ogl/oglengine/effect/BloomEffect.cpp
+    ogl/oglengine/effect/TonemapEffect.cpp
+    ogl/oglengine/effect/DoFEffect.cpp
+    ogl/oglengine/effect/FXAAEffect.cpp
+    ogl/oglengine/effect/FogEffect.cpp
+    ogl/oglengine/effect/VolumetricLightEffect.cpp
+    ogl/oglengine/shadow/ShadowEffect.cpp
+    ogl/oglengine/object/Object3D.cpp
+    ogl/oglengine/object/Triangle.cpp
+    ogl/oglengine/object/Cube.cpp
+    ogl/oglengine/object/Sphere.cpp
+    ogl/oglengine/object/Sphere2.cpp
+    ogl/oglengine/object/Cube2.cpp
+    ogl/oglengine/object/Plane.cpp
+    ogl/oglengine/object/ClothMesh.cpp
+    ogl/oglengine/object/GroundPlane.cpp
+    ogl/oglengine/material/Material.cpp
+    ogl/oglengine/material/UnlitMaterial.cpp
+    ogl/oglengine/material/LitMaterial.cpp
+    ogl/oglengine/material/PBRMaterial.cpp
+    ogl/oglengine/material/SimpleTextureMaterial.cpp
+    ogl/oglengine/material/DebugIBLMaterial.cpp
+    ogl/oglengine/material/IBLPBRMaterial.cpp
+    ogl/oglengine/material/ClothMaterial.cpp
+    ogl/oglengine/material/SkinnedMaterial.cpp
+    ogl/oglengine/physics/ClothSimulation.cpp
+    ogl/oglengine/physics/CollisionPrimitives.cpp
+    ogl/oglengine/model/ModelLoader.cpp
+    ogl/oglengine/model/ModelObject.cpp
+    ogl/oglengine/model/MeshNode.cpp
+    ogl/oglengine/model/SceneNode.cpp
+    ogl/oglengine/model/Animator.cpp
+    ogl/oglengine/particle/ParticleSystem.cpp
+    ogl/oglengine/particle/FireEffect.cpp
+    ogl/oglengine/particle/RainEffect.cpp
+    ogl/oglengine/particle/SnowEffect.cpp
+    ogl/oglengine/particle/CloudEffect.cpp
+    ogl/oglengine/particle/JetEffect.cpp
+    ogl/project/customeffect/RippleEffect.cpp
+    ogl/project/customeffect/CircleFlameEffect.cpp
+    ogl/project/customeffect/Motorcycle.cpp
+    ogl/oglengine/tween/Tween.cpp
     stb_image/stb_image.cpp
 )
 

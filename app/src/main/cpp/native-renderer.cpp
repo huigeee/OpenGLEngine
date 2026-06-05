@@ -1,14 +1,23 @@
 #include <jni.h>
 #include <android/log.h>
 #include <string>
-#include "ogl/include/EGLCore.h"
-#include "ogl/include/Common.h"
+#include "ogl/oglengine/include/EGLCore.h"
+#include "ogl/oglengine/include/Common.h"
+#include "ogl/project/MainScene.h"
 
 static EGLCore* eglCore = nullptr;
+static MainScene* mainScene = nullptr;
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeInit(JNIEnv* env, jobject thiz, jobject surface, jstring filesDir) {
-    LOGD("initEgl called");
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// -------------------------------------------------------------------------
+// 实现函数（内部命名，不暴露为导出符号）
+// -------------------------------------------------------------------------
+
+static jboolean nativeInit(JNIEnv* env, jclass clazz, jobject surface, jstring filesDir) {
+    LOGD("nativeInit called");
     if (eglCore == nullptr) {
         eglCore = new EGLCore();
     }
@@ -22,6 +31,10 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeIni
         env->ReleaseStringUTFChars(filesDir, path);
     }
 
+    mainScene = new MainScene();
+    mainScene->setFilesDir(eglCore->getFilesDir());
+    eglCore->setScene(mainScene);
+
     if (!eglCore->init(env, surface)) {
         LOGD("eglCore->init returned false");
         return JNI_FALSE;
@@ -32,21 +45,18 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeIni
     return JNI_TRUE;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeReConnectSurface(JNIEnv* env, jobject thiz, jobject surface) {
-    LOGD("requestReConnectSurface called");
+static jboolean nativeReConnectSurface(JNIEnv* env, jclass clazz, jobject surface) {
+    LOGD("nativeReConnectSurface called");
     if (eglCore == nullptr) {
         LOGE("eglCore not initialized");
         return JNI_FALSE;
     }
-    // 在渲染线程中处理 Surface 重新链接（线程安全）
     eglCore->requestReConnectSurface(env, surface);
     LOGD("Surface reconnection requested to render thread");
     return JNI_TRUE;
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeRelease(JNIEnv* env, jobject thiz) {
+static void nativeRelease(JNIEnv* env, jclass clazz) {
     if (eglCore != nullptr) {
         eglCore->release();
         delete eglCore;
@@ -54,86 +64,64 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeRel
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativePause(JNIEnv* env, jobject thiz) {
-    if (eglCore != nullptr) {
-        eglCore->pause();
-    }
+static void nativePause(JNIEnv* env, jclass clazz) {
+    if (eglCore != nullptr) eglCore->pause();
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeResume(JNIEnv* env, jobject thiz) {
-    if (eglCore != nullptr) {
-        eglCore->resume();
-    }
+static void nativeResume(JNIEnv* env, jclass clazz) {
+    if (eglCore != nullptr) eglCore->resume();
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetRotation(JNIEnv* env, jobject thiz, jfloat deltaX, jfloat deltaY) {
-    if (eglCore != nullptr) {
-        eglCore->setRotation(deltaX, deltaY);
-    }
+static jboolean nativeIsInitialized(JNIEnv* env, jclass clazz) {
+    return eglCore != nullptr ? JNI_TRUE : JNI_FALSE;
 }
 
-// -------------------------------------------------------------------------
-// Additional JNI stubs (implement as needed)
-// -------------------------------------------------------------------------
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetViewport(JNIEnv*, jobject, jint width, jint height) {
+static jfloat nativeGetFPS(JNIEnv* env, jclass clazz) {
+    if (eglCore != nullptr) return eglCore->getFPS();
+    return 0.0f;
+}
+
+// Viewport
+static void nativeSetViewport(JNIEnv* env, jclass clazz, jint width, jint height) {
     if (eglCore != nullptr) {
         eglCore->setViewportAsync(width, height);
         LOGI("nativeSetViewport requested: %dx%d", width, height);
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetScale(JNIEnv*, jobject, jfloat) {}
+// Touch
+static void nativeProcessTouchEvent(JNIEnv* env, jclass clazz,
+    jint actionMasked, jint pointerCount,
+    jfloatArray xs, jfloatArray ys, jintArray ids) {
+    if (eglCore == nullptr) return;
+    jsize count = env->GetArrayLength(xs);
+    if (count > 10) count = 10;
+    float xbuf[10], ybuf[10];
+    int   idbuf[10];
+    env->GetFloatArrayRegion(xs, 0, count, xbuf);
+    env->GetFloatArrayRegion(ys, 0, count, ybuf);
+    env->GetIntArrayRegion(ids, 0, count, idbuf);
+    eglCore->processTouchEvent(actionMasked, pointerCount, xbuf, ybuf, idbuf);
+}
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetPosition(JNIEnv*, jobject, jfloat, jfloat, jfloat) {}
+// 简单设置（stub，留给后续扩展）
+static void nativeSetScale(JNIEnv*, jclass, jfloat) {}
+static void nativeSetPosition(JNIEnv*, jclass, jfloat, jfloat, jfloat) {}
+static void nativeSetBaseColor(JNIEnv*, jclass, jfloat, jfloat, jfloat) {}
+static void nativeSetMetallic(JNIEnv*, jclass, jfloat) {}
+static void nativeSetRoughness(JNIEnv*, jclass, jfloat) {}
+static void nativeSetAO(JNIEnv*, jclass, jfloat) {}
+static void nativeSetCameraPosition(JNIEnv*, jclass, jfloat, jfloat, jfloat) {}
+static void nativeSetCameraTarget(JNIEnv*, jclass, jfloat, jfloat, jfloat) {}
+static void nativeSetTAAEnabled(JNIEnv*, jclass, jboolean) {}
+static void nativeSetBloomEnabled(JNIEnv*, jclass, jboolean) {}
+static void nativeSetBloomIntensity(JNIEnv*, jclass, jfloat) {}
+static void nativeSetTonemapEnabled(JNIEnv*, jclass, jboolean) {}
+static void nativeSetTonemapOp(JNIEnv*, jclass, jint) {}
+static void nativeSetExposure(JNIEnv*, jclass, jfloat) {}
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetBaseColor(JNIEnv*, jobject, jfloat, jfloat, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetMetallic(JNIEnv*, jobject, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetRoughness(JNIEnv*, jobject, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetAO(JNIEnv*, jobject, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetCameraPosition(JNIEnv*, jobject, jfloat, jfloat, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetCameraTarget(JNIEnv*, jobject, jfloat, jfloat, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetTAAEnabled(JNIEnv*, jobject, jboolean) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetBloomEnabled(JNIEnv*, jobject, jboolean) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetBloomIntensity(JNIEnv*, jobject, jfloat) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetTonemapEnabled(JNIEnv*, jobject, jboolean) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetTonemapOp(JNIEnv*, jobject, jint) {}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeSetExposure(JNIEnv*, jobject, jfloat) {}
-
-// -------------------------------------------------------------------------
-// Inspector 参数批量设置
-// -------------------------------------------------------------------------
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpdateCameraParams(
-        JNIEnv* env, jobject thiz,
+// 批量参数
+static void nativeUpdateCameraParams(JNIEnv* env, jclass clazz,
         jfloat posX, jfloat posY, jfloat posZ,
         jfloat targetX, jfloat targetY, jfloat targetZ,
         jfloat fov, jboolean orthographic) {
@@ -142,14 +130,12 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpd
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpdateSceneConfig(
-        JNIEnv* env, jobject thiz,
+static void nativeUpdateSceneConfig(JNIEnv* env, jclass clazz,
         jfloat bgR, jfloat bgG, jfloat bgB,
         jfloat ambient, jboolean shadow, jboolean ssao,
         jfloat lightPosX, jfloat lightPosY, jfloat lightPosZ,
         jfloat shadowBias, jfloat shadowSoftness, jboolean shadowPCF) {
-    LOGI("nativeUpdateSceneConfig called - shadow=%d lightPos=(%.2f, %.2f, %.2f) bias=%.3f softness=%.2f pcf=%d", 
+    LOGI("nativeUpdateSceneConfig - shadow=%d lightPos=(%.2f,%.2f,%.2f) bias=%.3f softness=%.2f pcf=%d",
           shadow, lightPosX, lightPosY, lightPosZ, shadowBias, shadowSoftness, shadowPCF);
     if (eglCore != nullptr) {
         eglCore->updateSceneConfig(bgR, bgG, bgB, ambient, shadow, false, ssao,
@@ -157,9 +143,7 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpd
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpdatePostProcessParams(
-        JNIEnv* env, jobject thiz,
+static void nativeUpdatePostProcessParams(JNIEnv* env, jclass clazz,
         jint aaMode, jboolean bloom, jfloat bloomIntensity,
         jboolean tonemap, jint tonemapOp, jfloat exposure,
         jboolean fog, jint fogMode, jfloat fogDensity,
@@ -168,23 +152,22 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpd
         jboolean volumetric, jfloat volDensity, jfloat volScattering,
         jint volSteps, jfloat volMaxDistance, jfloat volIntensity,
         jfloat volColorR, jfloat volColorG, jfloat volColorB) {
-    LOGI("nativeUpdatePostProcessParams JNI called - aaMode=%d bloom=%d bloomInt=%.2f tonemap=%d tonemapOp=%d exposure=%.2f fog=%d fogMode=%d fogDensity=%.2f dof=%d focusDist=%.2f vol=%d volDensity=%.3f",
-          aaMode, bloom, bloomIntensity, tonemap, tonemapOp, exposure, fog, fogMode, fogDensity, dof, dofFocusDist, volumetric, volDensity);
+    LOGI("nativeUpdatePostProcessParams - aaMode=%d bloom=%d bloomInt=%.2f tonemap=%d tonemapOp=%d"
+         " exposure=%.2f fog=%d fogMode=%d fogDensity=%.2f dof=%d focusDist=%.2f vol=%d volDensity=%.3f",
+          aaMode, bloom, bloomIntensity, tonemap, tonemapOp, exposure,
+          fog, fogMode, fogDensity, dof, dofFocusDist, volumetric, volDensity);
     if (eglCore != nullptr) {
         eglCore->updatePostProcessParams(aaMode, bloom, bloomIntensity, tonemap, tonemapOp, exposure,
                                          fog, fogMode, fogDensity, fogStart, fogEnd, fogR, fogG, fogB,
                                          dof, dofFocusDist, dofNear, dofFar,
                                          volumetric, volDensity, volScattering, volSteps,
                                          volMaxDistance, volIntensity, volColorR, volColorG, volColorB);
-        LOGI("nativeUpdatePostProcessParams eglCore->updatePostProcessParams completed");
     } else {
-        LOGI("nativeUpdatePostProcessParams eglCore is null, skipping update");
+        LOGI("nativeUpdatePostProcessParams - eglCore is null, skipping");
     }
 }
 
-extern "C" JNIEXPORT void JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpdateMaterialParams(
-        JNIEnv* env, jobject thiz,
+static void nativeUpdateMaterialParams(JNIEnv* env, jclass clazz,
         jfloat baseR, jfloat baseG, jfloat baseB,
         jfloat metallic, jfloat roughness, jfloat ao) {
     if (eglCore != nullptr) {
@@ -192,15 +175,69 @@ Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeUpd
     }
 }
 
-extern "C" JNIEXPORT jboolean JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeIsInitialized(JNIEnv*, jobject) {
-    return eglCore != nullptr ? JNI_TRUE : JNI_FALSE;
+// -------------------------------------------------------------------------
+// JNI_OnLoad — 动态注册所有方法
+// -------------------------------------------------------------------------
+jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+    JNIEnv* env = nullptr;
+    if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK) {
+        return JNI_ERR;
+    }
+
+    jclass cls = env->FindClass("com/iauto/ogl/service/NativeRenderer");
+    if (cls == nullptr) {
+        LOGE("JNI_OnLoad: FindClass com/iauto/ogl/service/NativeRenderer failed");
+        return JNI_ERR;
+    }
+
+    static const JNINativeMethod methods[] = {
+        // 生命周期
+        {"nativeInit",              "(Landroid/view/Surface;Ljava/lang/String;)Z", (void*)nativeInit},
+        {"nativeReConnectSurface",  "(Landroid/view/Surface;)Z",                   (void*)nativeReConnectSurface},
+        {"nativeRelease",           "()V",                                          (void*)nativeRelease},
+        {"nativePause",             "()V",                                          (void*)nativePause},
+        {"nativeResume",            "()V",                                          (void*)nativeResume},
+        {"nativeIsInitialized",     "()Z",                                          (void*)nativeIsInitialized},
+        {"nativeGetFPS",            "()F",                                          (void*)nativeGetFPS},
+        // Viewport
+        {"nativeSetViewport",       "(II)V",                                        (void*)nativeSetViewport},
+        // Touch
+        {"nativeProcessTouchEvent", "(II[F[F[I)V",                                  (void*)nativeProcessTouchEvent},
+        // 简单设置
+        {"nativeSetScale",          "(F)V",                                         (void*)nativeSetScale},
+        {"nativeSetPosition",       "(FFF)V",                                       (void*)nativeSetPosition},
+        {"nativeSetBaseColor",      "(FFF)V",                                       (void*)nativeSetBaseColor},
+        {"nativeSetMetallic",       "(F)V",                                         (void*)nativeSetMetallic},
+        {"nativeSetRoughness",      "(F)V",                                         (void*)nativeSetRoughness},
+        {"nativeSetAO",             "(F)V",                                         (void*)nativeSetAO},
+        {"nativeSetCameraPosition", "(FFF)V",                                       (void*)nativeSetCameraPosition},
+        {"nativeSetCameraTarget",   "(FFF)V",                                       (void*)nativeSetCameraTarget},
+        {"nativeSetTAAEnabled",     "(Z)V",                                         (void*)nativeSetTAAEnabled},
+        {"nativeSetBloomEnabled",   "(Z)V",                                         (void*)nativeSetBloomEnabled},
+        {"nativeSetBloomIntensity", "(F)V",                                         (void*)nativeSetBloomIntensity},
+        {"nativeSetTonemapEnabled", "(Z)V",                                         (void*)nativeSetTonemapEnabled},
+        {"nativeSetTonemapOp",      "(I)V",                                         (void*)nativeSetTonemapOp},
+        {"nativeSetExposure",       "(F)V",                                         (void*)nativeSetExposure},
+        // 批量参数
+        {"nativeUpdateCameraParams",
+            "(FFFFFFFZ)V",                                                          (void*)nativeUpdateCameraParams},
+        {"nativeUpdateSceneConfig",
+            "(FFFFZZFFFFFZ)V",                                                      (void*)nativeUpdateSceneConfig},
+        {"nativeUpdatePostProcessParams",
+            "(IZFZIFZIFFFFFFZFFFZFFIFFFFF)V",                                       (void*)nativeUpdatePostProcessParams},
+        {"nativeUpdateMaterialParams",
+            "(FFFFFF)V",                                                            (void*)nativeUpdateMaterialParams},
+    };
+
+    jint result = env->RegisterNatives(cls, methods, sizeof(methods) / sizeof(methods[0]));
+    if (result != JNI_OK) {
+        LOGE("JNI_OnLoad: RegisterNatives failed, result = %d", result);
+        return JNI_ERR;
+    }
+    LOGD("JNI_OnLoad: RegisterNatives OK");
+    return JNI_VERSION_1_6;
 }
 
-extern "C" JNIEXPORT jfloat JNICALL
-Java_com_iauto_myapplication_service_OglRendererService_00024Companion_nativeGetFPS(JNIEnv*, jobject) {
-    if (eglCore != nullptr) {
-        return eglCore->getFPS();
-    }
-    return 0.0f;
+#ifdef __cplusplus
 }
+#endif
