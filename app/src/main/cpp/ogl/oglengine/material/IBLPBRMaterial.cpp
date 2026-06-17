@@ -187,6 +187,16 @@ void IBLPBRMaterial::use() {
         glBindTexture(GL_TEXTURE_2D, normalTex);
     }
     
+    // Emissive map
+    if (shaderFlag & FLAG_EMISSIVE_MAP) {
+        sh->setInt("emissiveMap", 9);
+        sh->setFloat("emissiveIntensity", emissiveIntensity);
+    }
+    if (emissiveTex != 0) {
+        glActiveTexture(GL_TEXTURE9);
+        glBindTexture(GL_TEXTURE_2D, emissiveTex);
+    }
+    
     // Bind shadow map if available
     if ((shaderFlag & FLAG_SHADOW) && shadowMap != 0) {
         glActiveTexture(GL_TEXTURE8);
@@ -250,6 +260,12 @@ void IBLPBRMaterial::setAOMap(GLuint tex) {
 void IBLPBRMaterial::setNormalMap(GLuint tex) {
     normalTex = tex;
     if (tex != 0) shaderFlag |= FLAG_NORMAL_MAP;
+}
+
+void IBLPBRMaterial::setEmissiveMap(GLuint tex) {
+    emissiveTex = tex;
+    if (tex != 0) shaderFlag |= FLAG_EMISSIVE_MAP;
+    else          shaderFlag &= ~FLAG_EMISSIVE_MAP;
 }
 
 void IBLPBRMaterial::setCamPos(float x, float y, float z) {
@@ -425,6 +441,11 @@ vec3 getNormalFromMap() {
 )";
 }
 
+const char* IBLPBRMaterial::getEmissiveMapChunk() {
+    return R"(
+)";
+}
+
 const char* IBLPBRMaterial::getAlbedoMapChunk() {
     return "";
 }
@@ -514,6 +535,10 @@ std::string IBLPBRMaterial::buildFS(int flag) {
     }
     if (flag & FLAG_SHADOW) {
         fs += getShadowChunk();
+    }
+    if (flag & FLAG_EMISSIVE_MAP) {
+        fs += "uniform sampler2D emissiveMap;\n";
+        fs += "uniform float emissiveIntensity;\n";
     }
 
     fs += R"(
@@ -607,6 +632,14 @@ void main() {
     // Apply shadow ONCE to final color (shadow is from separate sun light)
     float shadow = calculateShadow(WorldPos);
     color *= shadow;
+)";
+    }
+
+    // Emissive map
+    if (flag & FLAG_EMISSIVE_MAP) {
+        fs += R"(
+    vec3 emissive = texture(emissiveMap, TexCoords).rgb;
+    color += emissive * emissiveIntensity;
 )";
     }
 

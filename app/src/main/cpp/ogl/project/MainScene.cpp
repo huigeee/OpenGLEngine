@@ -1,7 +1,10 @@
 #include "MainScene.h"
+#include "../oglengine/ui/include/UIRenderer.h"
+#include "../oglengine/camera/include/CameraBrain.h"
 #include "../oglengine/include/Shader.h"
 #include "../oglengine/include/Sphere2.h"
 #include "../oglengine/include/Cube2.h"
+#include <cmath>
 #include "../oglengine/include/IBLPBRMaterial.h"
 #include "../oglengine/include/ClothMaterial.h"
 #include "../oglengine/include/ClothMesh.h"
@@ -400,6 +403,120 @@ void MainScene::onInit() {
 //    motorcycle->init();
 
     LOGI("MainScene::onInit done");
+
+    // ====================================================================
+    // 2D UI 测试
+    // ====================================================================
+    // 坐标系：左上角 (0,0)，右下角 (screenWidth, screenHeight)
+    // setPosition(x, y)：x 越大越靠右，y 越大越靠下
+    // Object2D 内部会在 MVP 矩阵中自动翻转 y 方向
+
+    UIGroup* root = UIRenderer::instance()->getRoot();
+
+//    // --- UIText: 标题在顶部居中 ---
+//    uiTitleText = new UIText(100);
+//    uiTitleText->setText("UI Test");
+//    uiTitleText->setFontSize(18);
+//    uiTitleText->setColor(1.0f, 1.0f, 0.0f, 1.0f);
+//    uiTitleText->setSize(300, 60);
+//    uiTitleText->setPosition(50, 50);
+//    // 设置字体文件路径（Android 系统字体）
+//    // 常用系统字体：DroidSans.ttf, NotoSansSC-Regular.otf, Roboto-Regular.ttf 等
+//    std::string fontPath = "/system/fonts/DroidSans.ttf";
+//    uiTitleText->setFontPath(fontPath);
+//    root->addChild(uiTitleText);
+//
+//    // --- UIImage: 停车标志 (100x100) 顶部偏左 ---
+//    uiSignImage = new UIImage(101);
+//    uiSignImage->setSize(100, 100);
+//    uiSignImage->setPosition(50, 110);
+//    {
+//        std::string texPath = getResourceLoader()->getFilesDir() + "/texture/adas_parking_sign.png";
+//        if (!uiSignImage->setTextureFromFile(texPath)) {
+//            LOGE("Failed to load parking sign: %s", texPath.c_str());
+//        }
+//    }
+//    root->addChild(uiSignImage);
+//
+//    // --- UIImage: 雷达图 (100x100) 顶部居中 ---
+//    uiRadarImage = new UIImage(102);
+//    uiRadarImage->setSize(100, 100);
+//    uiRadarImage->setPosition(200, 110);
+//    {
+//        std::string radarPath = getResourceLoader()->getFilesDir() + "/texture/adas_radar_circular.png";
+//        if (!uiRadarImage->setTextureFromFile(radarPath)) {
+//            LOGE("Failed to load radar: %s", radarPath.c_str());
+//        }
+//    }
+//    root->addChild(uiRadarImage);
+
+    // --- UIButton: 视角切换按钮 ---
+    uiTestButton = new UIButton(103);
+    uiTestButton->setSize(120, 50);
+    uiTestButton->setLabel("Orbit", 18);
+    uiTestButton->setPosition(20, 20);
+    uiTestButton->getLabel()->setFontPath("/system/fonts/DroidSans.ttf");
+    uiTestButton->setOnClick([this](int id) {
+        LOGI("===== Camera switch button clicked =====");
+        if (!getCamera()) return;
+        CameraBrain* brain = dynamic_cast<CameraBrain*>(getCamera()->getController());
+        if (brain && orbitCam && fixedCam) {
+            // 如果在轨道模式，切换到固定视角
+            if (brain->getActiveCamera() == orbitCam) {
+                LOGI("Switching to Fixed camera");
+                brain->blendTo(fixedCam, 1.0f);
+                // 更新按钮文字
+                uiTestButton->setLabel("Orbit", 18);
+            } else {
+                LOGI("Switching to Orbit camera");
+                brain->blendTo(orbitCam, 1.0f);
+                uiTestButton->setLabel("Fixed", 18);
+            }
+        }
+    });
+    root->addChild(uiTestButton);
+
+    LOGI("2D UI elements created");
+
+//    // ====================================================================
+//    // 水面
+//    // ====================================================================
+//    waterPlane = new WaterPlane();
+//    waterPlane->init();
+//    waterPlane->setPosition(-4.5f, -0.60f, -1.0f);  // 偏左，略高于地面 (-0.73)
+//    waterPlane->setSize(4.0f, 4.0f);
+//    waterPlane->setColor(0.1f, 0.5f, 0.8f, 0.8f);
+//    waterPlane->setWaveSpeed(1.0f);
+//    waterPlane->setWaveHeight(0.06f);
+//    LOGI("WaterPlane created");
+
+    // ====================================================================
+    // Cinemachine 风格摄像机 — 通过 Camera::setController 挂载
+    // ====================================================================
+    CameraBrain* brain = new CameraBrain();
+    
+    // 固定视角相机（初始视角）
+    fixedCam = new FixedCamera();
+    fixedCam->setPosition(0.0f, 2.0f, 5.0f);
+    fixedCam->setTarget(0.0f, 0.0f, 0.0f);
+    fixedCam->setPriority(10);
+    fixedCam->setFov(50.0f);
+    brain->addCamera(fixedCam);
+    
+    // 轨道相机（环绕视角，可拖拽）
+    orbitCam = new OrbitCamera();
+    orbitCam->setTarget(0.0f, 0.0f, 0.0f);
+    orbitCam->setDistance(4.0f);
+    orbitCam->setYaw(30.0f);
+    orbitCam->setPitch(20.0f);
+    orbitCam->setPriority(5);
+    orbitCam->setSmoothSpeed(8.0f);
+    orbitCam->setFov(50.0f);
+    brain->addCamera(orbitCam);
+
+    // 挂载到 MainCamera
+    getCamera()->setController(brain);
+    brain->cutTo(fixedCam);  // 初始使用固定视角
 }
 
 // ---------------------------------------------------------------------------
@@ -420,6 +537,15 @@ void MainScene::onRelease() {
     if (debugProgram) { glDeleteProgram(debugProgram); debugProgram = 0; }
     if (debugQuadVAO) { glDeleteVertexArrays(1, &debugQuadVAO); debugQuadVAO = 0; }
     if (debugQuadVBO) { glDeleteBuffers(1, &debugQuadVBO); debugQuadVBO = 0; }
+
+    // 2D UI cleanup
+    if (uiTitleText)  { uiTitleText->removeFromParent(); delete uiTitleText;  uiTitleText  = nullptr; }
+    if (uiSignImage)  { uiSignImage->removeFromParent(); delete uiSignImage;  uiSignImage  = nullptr; }
+    if (uiRadarImage) { uiRadarImage->removeFromParent(); delete uiRadarImage; uiRadarImage = nullptr; }
+    if (uiTestButton) { uiTestButton->removeFromParent(); delete uiTestButton; uiTestButton = nullptr; }
+    if (waterPlane) { waterPlane->release(); delete waterPlane; waterPlane = nullptr; }
+    if (orbitCam)   { delete orbitCam;   orbitCam   = nullptr; }
+    if (fixedCam)   { delete fixedCam;   fixedCam   = nullptr; }
 }
 
 // ---------------------------------------------------------------------------
@@ -448,6 +574,7 @@ void MainScene::onUpdate(float dt) {
         cowboyAnimator->update(dt);
         cowboyAnimator->computeBoneMatrices();
     }
+    if (waterPlane) waterPlane->update(dt);
 }
 
 // ---------------------------------------------------------------------------
@@ -462,6 +589,7 @@ void MainScene::onRenderExtra(const float* viewMat, const float* projMat) {
     if (rippleEffect) rippleEffect->render(viewMat, projMat);
     if (circleFlameEffect) circleFlameEffect->render(viewMat, projMat);
     if (motorcycle) motorcycle->render(viewMat, projMat);
+    if (waterPlane) waterPlane->render(viewMat, projMat, getWidth(), getHeight());
 }
 
 // ---------------------------------------------------------------------------
@@ -563,6 +691,7 @@ void MainScene::loadCarModel() {
     mat_back_light_n->setRoughnessMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Roughness/back_light_n.jpg", false));
     mat_back_light_n->setNormalMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Normal/back_light_n.jpg", false));
     mat_back_light_n->setAOMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Ao/back_light_n.jpg", false));
+    mat_back_light_n->setEmissiveMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Emission/back_light_n.png", false));
     IBLPBRMaterial* mat_door_handle_n = new IBLPBRMaterial();
     mat_door_handle_n->init();
     mat_door_handle_n->setAlbedoMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/BaseColor/door_handle_n.jpg", false));
@@ -605,12 +734,15 @@ void MainScene::loadCarModel() {
     mat_front_light_n->setRoughnessMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Roughness/front_light_n.jpg", false));
     mat_front_light_n->setNormalMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Normal/front_light_n.jpg", false));
     mat_front_light_n->setAOMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Ao/front_light_n.jpg", false));
+    mat_front_light_n->setEmissiveMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Emission/front_light_n.png", false));
     IBLPBRMaterial* mat_interior_n = new IBLPBRMaterial();
     mat_interior_n->init();
-    mat_interior_n->setBaseColor(0.1, 0.1, 0.1);
+    mat_interior_n->setBaseColor(0.01, 0.01, 0.01);
+    mat_interior_n->setMetallic(0.2);
+    mat_interior_n->setRoughness(0.9);
 //    mat_interior_n->setAlbedoMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/BaseColor/interior_n.jpg", false));
-    mat_interior_n->setMetallicMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Metallic/interior_n.jpg", false));
-    mat_interior_n->setRoughnessMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Roughness/interior_n.jpg", false));
+//    mat_interior_n->setMetallicMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Metallic/interior_n.jpg", false));
+//    mat_interior_n->setRoughnessMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Roughness/interior_n.jpg", false));
     mat_interior_n->setNormalMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Normal/interior_n.jpg", false));
     mat_interior_n->setAOMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Ao/interior_n.jpg", false));
     IBLPBRMaterial* mat_wheel_tire_n = new IBLPBRMaterial();
@@ -621,13 +753,10 @@ void MainScene::loadCarModel() {
     mat_wheel_tire_n->setNormalMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Normal/wheel_tire_n.jpg", false));
     mat_wheel_tire_n->setAOMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/Ao/wheel_tire_n.jpg", false));
 
-    IBLPBRMaterial* mat_graound = new IBLPBRMaterial();
+    UnlitMaterial* mat_graound = new UnlitMaterial();
     mat_graound->init();
-    mat_graound->setAlbedoMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/ground-n.png", false));
-    mat_graound->setBaseColor(0.1f, 0.1f, 0.1f);
-    mat_graound->setMetallic(0.0f);
-    mat_graound->setRoughness(0.0f);
-    mat_graound->setAO(1.0f);
+    mat_graound->setBaseColorMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/ground-n.png", false));
+    mat_graound->setTransparent(true);
 
     UnlitMaterial* unlitMaterial = new UnlitMaterial();
     unlitMaterial->init();
@@ -641,6 +770,11 @@ void MainScene::loadCarModel() {
     mat_glass->setAO(1.0f);
     mat_glass->setOpacity(0.9f);
 
+    UnlitMaterial* mat_light = new UnlitMaterial();
+    mat_light->init();
+    mat_light->setBaseColorMap(PBRMaterial::uploadTextureFromFile(rl, "models/BEV_ES500e/texture/lightBeam.png", false));
+    mat_light->setTransparent(true);
+
     if (!carLoader.load(carPath, [&](MeshNode* node, int /*idx*/) {
         LOGI("loadCarModel %s ", node->getName().c_str());
         if (node->getName().compare("buttonCarKey") == 0 || node->getName().compare("buttonWheel") == 0
@@ -648,23 +782,23 @@ void MainScene::loadCarModel() {
         || node->getName().compare("buttonTrunk") == 0 || node->getName().compare("buttonChargingPort") == 0
         || node->getName().compare("buttonVehicleHeight") == 0 || node->getName().compare("buttonHeadlamp") == 0
         || node->getName().compare("buttonDoorWindow") == 0 || node->getName().compare("buttonSkyWindow") == 0
-        || node->getName().compare("light_a_l") == 0 || node->getName().compare("light_a_r") == 0 || node->getName().compare("light_b") == 0
+        /*|| node->getName().compare("light_a_l") == 0 || node->getName().compare("light_a_r") == 0 */|| node->getName().compare("light_b") == 0
         || node->getName().compare("light_h_l") == 0 || node->getName().compare("light_h_r") == 0
         || node->getName().compare("exterior_doors_RL_surface") == 0 || node->getName().compare("exterior_doors_FL_surface") == 0
         || node->getName().compare("exterior_doors_RR_surface") == 0 || node->getName().compare("exterior_doors_FR_surface") == 0) {
             LOGI("loadCarModel unlitMaterial");
             node->setMaterial(unlitMaterial);
             node->setVisible(false);
-        } else if (node->getName().compare("exterior_doors_RR_other_2") == 0 || node->getName().compare("exterior_doors_RL_other_2") == 0
-            || node->getName().compare("exterior_doorshandle_RR") == 0 || node->getName().compare("exterior_doorshandle_RR_other") == 0
+        } else if (/*node->getName().compare("exterior_doors_RR_other_2") == 0 || node->getName().compare("exterior_doors_RL_other_2") == 0*/
+            /*|| */node->getName().compare("exterior_doorshandle_RR") == 0 || node->getName().compare("exterior_doorshandle_RR_other") == 0
             /*|| node->getName().compare("exterior_windows_RR") == 0 */|| node->getName().compare("exterior_doors_RR") == 0
             || node->getName().compare("exterior_doors_RR_other") == 0 || node->getName().compare("exterior_doorshandle_RL") == 0
             || node->getName().compare("exterior_doorshandle_RL_other") == 0 || node->getName().compare("exterior_doors_RL_other") == 0
             /*|| node->getName().compare("exterior_windows_RL") == 0 */|| node->getName().compare("exterior_doors_RL") == 0) {
             LOGI("loadCarModel mat_exterior_doors_R_n");
             node->setMaterial(mat_exterior_doors_R_n);
-        } else if (node->getName().compare("exterior_doors_FR_other_2") == 0 || node->getName().compare("exterior_doors_FL_other_2") == 0
-           || node->getName().compare("exterior_doors_FR") == 0 /*|| node->getName().compare("exterior_windows_FR") == 0*/
+        } else if (/*node->getName().compare("exterior_doors_FR_other_2") == 0 || node->getName().compare("exterior_doors_FL_other_2") == 0*/
+           /*|| */node->getName().compare("exterior_doors_FR") == 0 /*|| node->getName().compare("exterior_windows_FR") == 0*/
            || node->getName().compare("exterior_doors_FR_other") == 0 || node->getName().compare("exterior_mirror_FR") == 0
            || node->getName().compare("exterior_mirror_FR_other2") == 0 || node->getName().compare("exterior_mirror_FR_other") == 0
            /*|| node->getName().compare("exterior_windows_FR_other") == 0*/ /*|| node->getName().compare("exterior_windows_FL_other") == 0*/
@@ -680,7 +814,9 @@ void MainScene::loadCarModel() {
         } else if (node->getName().compare("exterior_front_light_L") == 0 || node->getName().compare("exterior_front_light_R") == 0) {
             LOGI("loadCarModel mat_front_light_n");
             node->setMaterial(mat_front_light_n);
-        } else if (node->getName().compare("exterior_back_light_L") == 0 || node->getName().compare("exterior_back_light_R") == 0) {
+        } else if (node->getName().compare("exterior_back_light_L") == 0 || node->getName().compare("exterior_back_light_R") == 0
+                || node->getName().compare("exterior_trunk_light_L") == 0 || node->getName().compare("exterior_trunk_light_R") == 0
+                || node->getName().compare("exterior_trunk_light_other") == 0) {
             LOGI("loadCarModel mat_back_light_n");
             node->setMaterial(mat_back_light_n);
         } else if (/*node->getName().compare("exterior_front_windshield") == 0 *//*|| node->getName().compare("exterior_roof_window") == 0*/
@@ -690,14 +826,14 @@ void MainScene::loadCarModel() {
                    || node->getName().compare("exterior_front_windshield_wiper_R") == 0 || node->getName().compare("exterior_front_windshield_wiper_L") == 0) {
             LOGI("loadCarModel mat_exterior_body_panels_n");
             node->setMaterial(mat_exterior_body_panels_n);
-        } else if (node->getName().compare("exterior_trunk") == 0 || node->getName().compare("exterior_trunk_other") == 0
-                   || node->getName().compare("exterior_trunk_light_L") == 0 || node->getName().compare("exterior_trunk_light_R") == 0
-                   || node->getName().compare("exterior_trunk_light_other") == 0) {
+        } else if (node->getName().compare("exterior_trunk") == 0 || node->getName().compare("exterior_trunk_other") == 0) {
             LOGI("loadCarModel mat_exterior_trunk_n");
             node->setMaterial(mat_exterior_trunk_n);
         } else if (node->getName().compare("interior_body") == 0 || node->getName().compare("interior_body_B") == 0
                    || node->getName().compare("interior_seat_d") == 0 || node->getName().compare("interior_seat_p") == 0
-                   || node->getName().compare("interior_roof") == 0) {
+                   || node->getName().compare("interior_roof") == 0
+                  || node->getName().compare("exterior_doors_RR_other_2") == 0 || node->getName().compare("exterior_doors_RL_other_2") == 0
+                  || node->getName().compare("exterior_doors_FR_other_2") == 0 || node->getName().compare("exterior_doors_FL_other_2") == 0) {
             LOGI("loadCarModel mat_interior_n");
             node->setMaterial(mat_interior_n);
         } else if (node->getName().compare("exterior_wheel_tire_FR") == 0 || node->getName().compare("exterior_wheel_tire_RR") == 0
@@ -707,7 +843,11 @@ void MainScene::loadCarModel() {
         } else if (node->getName().compare("ground") == 0) {
             LOGI("loadCarModel mat_graound");
             node->setMaterial(mat_graound);
-            node->setVisible(false);
+//            node->setVisible(false);
+        } else if (node->getName().compare("light_a_l") == 0 || node->getName().compare("light_a_r") == 0) {
+            LOGI("loadCarModel mat_graound");
+            node->setMaterial(mat_light);
+//            node->setVisible(false);
         } else if (node->getName().compare("exterior_windows_RL") == 0 || node->getName().compare("exterior_windows_RR") == 0
                    || node->getName().compare("exterior_windows_FR") == 0 || node->getName().compare("exterior_windows_FR_other") == 0
                    || node->getName().compare("exterior_windows_FL") == 0 || node->getName().compare("exterior_windows_FL_other") == 0

@@ -13,8 +13,10 @@
 #include "include/ClothMaterial.h"
 #include "include/UnlitMaterial.h"
 #include "include/Common.h"
+#include "camera/include/CameraController.h"
 #include "shadow/ShadowEffect.h"
 #include "model/SceneNode.h"
+#include "ui/include/UIRenderer.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -311,6 +313,9 @@ void Scene::setViewport(int width, int height) {
     if (config.shadowEnabled && shadowEffect && !shadowEffect->isShadowEnabled()) {
         shadowEffect->init(width, height);
     }
+    
+    // 通知 UI 渲染器更新屏幕尺寸
+    UIRenderer::instance()->setViewport(width, height);
 }
 
 // ---------------------------------------------------------------------------
@@ -405,6 +410,14 @@ void Scene::renderObjects() {
         // Prefer the object's own material (MeshNode path) over the parallel slot
         Material* mat = obj->getMaterial();
         if (!mat) mat = materials[i];
+        
+        // 半透明物体：开启 blend，不写深度
+        bool isTrans = mat && mat->isTransparent();
+        if (isTrans) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glDepthMask(GL_FALSE);
+        }
         
         obj->onPreRender();
         obj->beforeRender();
@@ -508,7 +521,8 @@ void Scene::renderObjects() {
         [](const auto& a, const auto& b){ return a.first < b.first; });
 
     glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);  // Ensure blend is enabled for transparent objects
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (auto& [depth, idx] : transparentItems) {
         renderOne(idx);
     }
@@ -606,6 +620,9 @@ void Scene::render() {
 
     // Subclass update hook
     onUpdate(dt);
+
+    // Camera controller update（如果有 CameraController）
+    if (camera) camera->update(dt);
 
     // Walk SceneNode hierarchies and push world matrices into MeshNodes.
     // Must run after onUpdate (so user-set rotations apply this frame) and
@@ -751,6 +768,10 @@ void Scene::render() {
     
     blitToScreen(ctx.fbo, ctx.colorTex);
     onPostBlit();
+
+    // 2D UI 叠加（在默认 framebuffer 上）
+    UIRenderer::instance()->render();
+
     frameCount++;
 }
 
@@ -797,14 +818,18 @@ void Scene::release() {
 // Inspector 参数批量设置
 // -------------------------------------------------------------------------
 void Scene::updateCameraParams(float posX, float posY, float posZ,
-                              float targetX, float targetY, float targetZ,
-                              float fov, bool orthographic) {
+                               float targetX, float targetY, float targetZ,
+                               float fov, bool orthographic) {
     if (camera == nullptr) return;
-    
-    // 使用 direct 方法，不重置 yaw/pitch，保持用户旋转的角度
-    camera->setPositionDirect(posX, posY, posZ);
-    camera->setTargetDirect(targetX, targetY, targetZ);
-    
+
+    // 有 controller 则交给 controller 处理（如 CameraBrain 转发给活跃的 vcam）
+    if (camera->getController()) {
+        camera->getController()->updateFromPosTarget(posX, posY, posZ, targetX, targetY, targetZ);
+    } else {
+        camera->setPositionDirect(posX, posY, posZ);
+        camera->setTargetDirect(targetX, targetY, targetZ);
+    }
+
     // 更新配置
     config.camEyeX = posX;
     config.camEyeY = posY;
@@ -983,6 +1008,13 @@ void Scene::updateMaterialParams(float baseR, float baseG, float baseB,
 // -----------------------------------------------------------------------
 void Scene::processTouchEvent(int actionMasked, int pointerCount,
                                const float* xs, const float* ys, const int* ids) {
+    // 优先给 Camera controller 消费（如 CameraBrain 的轨道控制）
+    if (camera && camera->getController()) {
+        if (camera->getController()->handleTouch(actionMasked, pointerCount, xs, ys, ids)) {
+            return;  // controller 消费了事件，不传给场景
+        }
+    }
+
     static float prevX[10] = {0};
     static float prevY[10] = {0};
     static bool tracking[10] = {false};

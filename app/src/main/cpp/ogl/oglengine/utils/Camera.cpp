@@ -1,4 +1,5 @@
 #include "../include/Camera.h"
+#include "../camera/include/CameraController.h"
 #include <math.h>
 #include <algorithm>
 
@@ -7,6 +8,10 @@ Camera::Camera() : distance(3.0f), yaw(0.0f), pitch(0.0f), directMode(false) {
     target[0] = 0.0f; target[1] = 0.0f; target[2] = 0.0f;
     up[0] = 0.0f; up[1] = 1.0f; up[2] = 0.0f;
     updateViewMatrix();
+}
+
+Camera::~Camera() {
+    delete controller_;
 }
 
 void Camera::setPosition(float x, float y, float z) {
@@ -67,6 +72,19 @@ void Camera::lookAt(float eyeX, float eyeY, float eyeZ, float targetX, float tar
     yaw = atan2f(eyeX - targetX, eyeZ - targetZ);
     pitch = asinf((eyeY - targetY) / (distance > 0.0f ? distance : 1.0f));
     updateViewMatrix();
+}
+
+void Camera::setController(CameraController* ctrl) {
+    controller_ = ctrl;
+}
+
+void Camera::update(float dt) {
+    if (controller_) {
+        // 有 controller：由 controller 决定相机参数
+        controller_->update(dt);
+        controller_->applyToCamera(this);
+    }
+    // 没有 controller：保持原有逻辑（Scene 中的 update 会调 setRotation 等）
 }
 
 void Camera::updateViewMatrix() {

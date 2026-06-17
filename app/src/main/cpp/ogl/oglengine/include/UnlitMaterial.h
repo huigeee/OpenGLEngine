@@ -20,6 +20,10 @@ public:
     void setColor(float r, float g, float b, float a);
     float* getColor() { return color; }
 
+    // 透明控制：用户自行设置是否半透明
+    void setTransparent(bool t) { transparent_ = t; }
+    bool isTransparent() const override { return transparent_; }
+
     // Base color map (optional). Setting a non-zero texture enables
     // FLAG_BASE_COLOR_MAP and requires the geometry to provide UVs at
     // attribute location 1 (vec2). Pass 0 to disable.
@@ -92,6 +96,7 @@ private:
     static std::string buildFS(int flag);
 
     float color[4];
+    bool transparent_ = false;
 
     GLuint baseColorTex = 0;
 

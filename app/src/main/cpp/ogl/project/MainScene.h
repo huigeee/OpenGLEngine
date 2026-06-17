@@ -13,6 +13,12 @@
 #include "../oglengine/model/SceneNode.h"
 #include "../oglengine/model/ModelLoader.h"
 #include "../oglengine/model/Animator.h"
+#include "../oglengine/include/WaterPlane.h"
+#include "../oglengine/camera/include/OrbitCamera.h"
+#include "../oglengine/camera/include/FixedCamera.h"
+#include "../oglengine/ui/include/UIText.h"
+#include "../oglengine/ui/include/UIImage.h"
+#include "../oglengine/ui/include/UIButton.h"
 #include <glm/glm.hpp>
 
 // ---------------------------------------------------------------------------
@@ -72,4 +78,17 @@ private:
     GLuint debugProgram = 0;
     GLint  debugLoc_tex = -1;
     GLint  debugLoc_mode = -1;
+
+    // ========== 2D UI 测试元素 ==========
+    UIText*   uiTitleText   = nullptr;
+    UIImage*  uiSignImage   = nullptr;
+    UIImage*  uiRadarImage  = nullptr;
+    UIButton* uiTestButton  = nullptr;
+
+    // ========== 水面 ==========
+    WaterPlane* waterPlane = nullptr;
+
+    // ========== 摄像机控制器 ==========
+    OrbitCamera*    orbitCam      = nullptr;
+    FixedCamera*    fixedCam      = nullptr;
 };
