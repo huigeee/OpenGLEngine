@@ -4,6 +4,7 @@
 #include <cstring>
 #include <time.h>
 #include "../include/Common.h"
+#include "../ui/include/UIRenderer.h"
 
 EGLCore::EGLCore() : eglDisplay(EGL_NO_DISPLAY), eglContext(EGL_NO_CONTEXT),
             eglSurface(EGL_NO_SURFACE), eglConfig(nullptr), nativeWindow(nullptr),
@@ -374,6 +375,7 @@ void EGLCore::applyViewport() {
     }
     
     scene->setViewport(viewportRequest.width, viewportRequest.height);
+    UIRenderer::instance()->setViewport(viewportRequest.width, viewportRequest.height);
     viewportRequest.pending = false;
     LOGI("Viewport applied (render thread): %dx%d", viewportRequest.width, viewportRequest.height);
 }
@@ -569,7 +571,11 @@ void EGLCore::renderLoopInternal() {
             while (!touchQueue.empty()) {
                 TouchEvent ev = touchQueue.front();
                 touchQueue.pop();
-                scene->processTouchEvent(ev.actionMasked, ev.pointerCount, ev.xs, ev.ys, ev.ids);
+                // 先给 UI 层，UI 不消费再给 3D 场景
+                bool consumed = UIRenderer::instance()->handleTouch(ev.xs[0], ev.ys[0], ev.actionMasked);
+                if (!consumed) {
+                    scene->processTouchEvent(ev.actionMasked, ev.pointerCount, ev.xs, ev.ys, ev.ids);
+                }
             }
             pthread_mutex_unlock(&mutex);
             scene->render();

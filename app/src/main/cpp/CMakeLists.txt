@@ -31,6 +31,7 @@ add_library(png STATIC
     libpng/pngwutil.c
 )
 target_include_directories(png PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libpng)
+target_compile_definitions(png PRIVATE PNG_ARM_NEON_OPT=0)
 
 # Build assimp as SHARED — AGP will pick it up and package into APK
 set(BUILD_SHARED_LIBS                     ON  CACHE BOOL "" FORCE)
@@ -106,6 +107,16 @@ add_library(
     ogl/project/customeffect/CircleFlameEffect.cpp
     ogl/project/customeffect/Motorcycle.cpp
     ogl/oglengine/tween/Tween.cpp
+    ogl/oglengine/ui/src/Object2D.cpp
+    ogl/oglengine/ui/src/UIRenderer.cpp
+    ogl/oglengine/ui/src/UIGroup.cpp
+    ogl/oglengine/ui/src/UIText.cpp
+    ogl/oglengine/ui/src/UIImage.cpp
+    ogl/oglengine/ui/src/UIButton.cpp
+    ogl/oglengine/ui/src/Font.cpp
+    ogl/oglengine/water/WaterPlane.cpp
+    ogl/oglengine/camera/utils/VirtualCamera.cpp
+    ogl/oglengine/camera/utils/OrbitCamera.cpp
     stb_image/stb_image.cpp
 )
 
@@ -118,6 +129,7 @@ find_library(z-lib   z)
 
 target_include_directories(
     native-renderer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/assimp/assimp/include
 )
 

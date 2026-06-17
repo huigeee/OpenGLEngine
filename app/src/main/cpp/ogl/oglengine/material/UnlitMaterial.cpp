@@ -312,16 +312,19 @@ float calculateShadow(vec3 worldPos) {
     fs += R"(
 void main() {
     vec3 finalColor = uColor.rgb;
+    float matAlpha = uColor.a;
 )";
     if (flag & FLAG_BASE_COLOR_MAP) {
-        fs += "    finalColor *= texture(uBaseColorMap, vTexCoord).rgb;\n";
+        fs += "    vec4 inputColor = texture(uBaseColorMap, vTexCoord);\n";
+        fs += "    finalColor *= inputColor.rgb;\n";
+        fs += "    matAlpha *= inputColor.a;\n";
     }
     if (flag & FLAG_SHADOW) {
         fs += "    float shadow = calculateShadow(vWorldPos);\n";
         fs += "    finalColor *= shadow;\n";
     }
     fs += R"(
-    fragColor = vec4(finalColor, uColor.a);
+    fragColor = vec4(finalColor, matAlpha);
     vec2 newPos = ((nowScreenPos.xy / nowScreenPos.w) * 0.5 + 0.5);
     vec2 prePos = ((preScreenPos.xy / preScreenPos.w) * 0.5 + 0.5);
     velocity = newPos - prePos;

@@ -28,6 +28,7 @@ public:
     void setRoughnessMap(GLuint tex);
     void setAOMap(GLuint tex);
     void setNormalMap(GLuint tex);
+    void setEmissiveMap(GLuint tex);
     void setCamPos(float x, float y, float z);
 
     // Opacity / transparency support
@@ -75,6 +76,7 @@ public:
         FLAG_TRANSPARENT   = 1 << 6,
         FLAG_SHADOW        = 1 << 7,
         FLAG_SKINNED       = 1 << 8,
+        FLAG_EMISSIVE_MAP  = 1 << 9,
     };
 
     int getShaderFlag() const { return shaderFlag; }
@@ -111,6 +113,8 @@ private:
     GLuint roughnessTex = 0;
     GLuint aoTex = 0;
     GLuint normalTex = 0;
+    GLuint emissiveTex = 0;
+    float  emissiveIntensity = 1.0f;
     GLuint shadowMap = 0;
     float lightSpaceMatrix[16];
     bool shadowEnabled = false;
@@ -127,5 +131,6 @@ private:
     static const char* getRoughnessMapChunk();
     static const char* getAOMapChunk();
     static const char* getNormalMapChunk();
+    static const char* getEmissiveMapChunk();
     static const char* getShadowChunk();
 };
